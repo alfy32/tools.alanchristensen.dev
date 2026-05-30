@@ -2,7 +2,8 @@
   var TOOLS = [
     { name: 'JSON Formatter',  url: 'json-formatter.html' },
     { name: 'XML Formatter',   url: 'xml-formatter.html' },
-    { name: 'Time Converter', url: 'epoch-converter.html' },
+    { name: 'Time Converter',  url: 'epoch-converter.html' },
+    { name: 'Base64',          url: 'base64.html' },
   ];
 
   function isActive(filename) {
