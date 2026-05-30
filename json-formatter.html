@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Free online JSON formatter with syntax highlighting. No data leaves your browser.">
+  <title>JSON Formatter — Alan Christensen</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="nav.js"></script>
+  <script src="tools-nav.js"></script>
+</head>
+<body>
+  <div id="tools-shell">
+    <main id="tools-main">
+      <div class="tool-header">
+        <h1>JSON Formatter</h1>
+        <p>Pretty-print and validate JSON. Nothing leaves your browser.</p>
+      </div>
+
+      <div class="tool-actions">
+        <button class="btn-primary" id="fmt-btn">Format JSON</button>
+        <button class="btn-secondary" id="clear-btn">Clear</button>
+      </div>
+
+      <div class="tool-io">
+        <div class="tool-io-panel">
+          <label for="json-input">Input</label>
+          <textarea id="json-input" spellcheck="false" placeholder='{"key": "value"}'></textarea>
+        </div>
+        <div class="tool-io-panel">
+          <div class="panel-label-row">
+            <label>Output</label>
+            <button class="btn-secondary" id="copy-btn">Copy</button>
+          </div>
+          <pre class="tool-output" id="json-output" aria-live="polite"></pre>
+        </div>
+      </div>
+
+      <div class="tool-error" id="json-error"></div>
+    </main>
+  </div>
+
+  <script>
+    var inputEl  = document.getElementById('json-input');
+    var outputEl = document.getElementById('json-output');
+    var errorEl  = document.getElementById('json-error');
+    var copyBtn  = document.getElementById('copy-btn');
+
+    function highlight(json) {
+      var escaped = json
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+      return escaped.replace(
+        /("(\\u[a-fA-F0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+        function (m) {
+          if (/^"/.test(m)) {
+            return /:$/.test(m)
+              ? '<span class="json-key">' + m + '</span>'
+              : '<span class="json-str">' + m + '</span>';
+          }
+          if (/true|false/.test(m)) return '<span class="json-bool">' + m + '</span>';
+          if (/null/.test(m))       return '<span class="json-null">' + m + '</span>';
+          return '<span class="json-num">' + m + '</span>';
+        }
+      );
+    }
+
+    function format() {
+      errorEl.style.display = 'none';
+      var raw = inputEl.value.trim();
+      if (!raw) { outputEl.innerHTML = ''; return; }
+      try {
+        var pretty = JSON.stringify(JSON.parse(raw), null, 2);
+        outputEl.innerHTML = highlight(pretty);
+      } catch (e) {
+        errorEl.textContent = e.message;
+        errorEl.style.display = 'block';
+        outputEl.innerHTML = '';
+      }
+    }
+
+    document.getElementById('fmt-btn').addEventListener('click', format);
+
+    document.getElementById('clear-btn').addEventListener('click', function () {
+      inputEl.value = '';
+      outputEl.innerHTML = '';
+      errorEl.style.display = 'none';
+    });
+
+    inputEl.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') format();
+    });
+
+    copyBtn.addEventListener('click', function () {
+      var text = outputEl.textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(function () {
+        var orig = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(function () { copyBtn.textContent = orig; }, 1500);
+      });
+    });
+  </script>
+</body>
+</html>

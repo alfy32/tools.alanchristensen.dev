@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Free Unix epoch timestamp converter. Auto-detects seconds vs milliseconds. No data leaves your browser.">
+  <title>Epoch Converter — Alan Christensen</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="nav.js"></script>
+  <script src="tools-nav.js"></script>
+</head>
+<body>
+  <div id="tools-shell">
+    <main id="tools-main">
+      <div class="tool-header">
+        <h1>Epoch Converter</h1>
+        <p>Convert Unix timestamps to human-readable dates. Nothing leaves your browser.</p>
+      </div>
+
+      <div class="epoch-input-row">
+        <input
+          type="text"
+          id="epoch-input"
+          class="epoch-text-input"
+          placeholder="e.g. 1748563200 or 1748563200000"
+          inputmode="numeric"
+          autocomplete="off"
+        >
+        <button class="btn-primary" id="convert-btn">Convert</button>
+      </div>
+      <p class="epoch-hint">Auto-detects unit: &gt;10 digits treated as milliseconds, otherwise seconds.</p>
+
+      <div class="tool-error" id="epoch-error"></div>
+
+      <div class="epoch-result-box" id="epoch-result" style="display:none">
+        <div class="epoch-result-grid">
+          <span class="epoch-label">Detected unit</span>
+          <span class="epoch-value" id="r-unit"></span>
+
+          <span class="epoch-label">Local time</span>
+          <span class="epoch-value" id="r-local"></span>
+
+          <span class="epoch-label">UTC</span>
+          <span class="epoch-value" id="r-utc"></span>
+
+          <span class="epoch-label">ISO 8601</span>
+          <span class="epoch-value" id="r-iso"></span>
+
+          <span class="epoch-label">Relative</span>
+          <span class="epoch-value" id="r-relative"></span>
+        </div>
+      </div>
+
+      <p class="epoch-current" id="epoch-current"></p>
+    </main>
+  </div>
+
+  <script>
+    var inputEl    = document.getElementById('epoch-input');
+    var resultBox  = document.getElementById('epoch-result');
+    var errorEl    = document.getElementById('epoch-error');
+
+    function relativeTime(ms) {
+      var diff = Date.now() - ms;
+      var abs  = Math.abs(diff);
+      var future = diff < 0;
+      var units = [
+        [60000,       'second', 1000],
+        [3600000,     'minute', 60000],
+        [86400000,    'hour',   3600000],
+        [2592000000,  'day',    86400000],
+        [31536000000, 'month',  2592000000],
+        [Infinity,    'year',   31536000000],
+      ];
+      for (var i = 0; i < units.length; i++) {
+        if (abs < units[i][0]) {
+          var n = Math.round(abs / units[i][2]);
+          if (n === 0) return 'just now';
+          var label = n + ' ' + units[i][1] + (n !== 1 ? 's' : '');
+          return future ? 'in ' + label : label + ' ago';
+        }
+      }
+    }
+
+    function convert() {
+      errorEl.style.display = 'none';
+      resultBox.style.display = 'none';
+
+      var raw = inputEl.value.trim();
+      if (!raw) return;
+
+      var n = Number(raw);
+      if (!Number.isFinite(n)) {
+        errorEl.textContent = 'Enter a valid integer timestamp.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      var digits = raw.replace(/^-/, '').replace(/\..*/, '').length;
+      var isMs = digits > 10;
+      var ms   = isMs ? n : n * 1000;
+      var date = new Date(ms);
+
+      if (isNaN(date.getTime())) {
+        errorEl.textContent = 'Timestamp out of range.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      document.getElementById('r-unit').textContent     = isMs ? 'Milliseconds' : 'Seconds';
+      document.getElementById('r-local').textContent    = date.toLocaleString();
+      document.getElementById('r-utc').textContent      = date.toUTCString();
+      document.getElementById('r-iso').textContent      = date.toISOString();
+      document.getElementById('r-relative').textContent = relativeTime(ms);
+      resultBox.style.display = 'block';
+    }
+
+    document.getElementById('convert-btn').addEventListener('click', convert);
+    inputEl.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') convert();
+    });
+
+    function updateCurrentEpoch() {
+      var now = Date.now();
+      var el = document.getElementById('epoch-current');
+      el.innerHTML =
+        'Current epoch: <strong>' + Math.floor(now / 1000) + '</strong> s' +
+        ' &nbsp;|&nbsp; ' +
+        '<strong>' + now + '</strong> ms';
+    }
+    updateCurrentEpoch();
+    setInterval(updateCurrentEpoch, 1000);
+  </script>
+</body>
+</html>

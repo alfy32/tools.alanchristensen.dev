@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Free online XML formatter. Pretty-print and indent XML. No data leaves your browser.">
+  <title>XML Formatter — Alan Christensen</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="nav.js"></script>
+  <script src="tools-nav.js"></script>
+</head>
+<body>
+  <div id="tools-shell">
+    <main id="tools-main">
+      <div class="tool-header">
+        <h1>XML Formatter</h1>
+        <p>Pretty-print and indent XML markup. Nothing leaves your browser.</p>
+      </div>
+
+      <div class="tool-actions">
+        <button class="btn-primary" id="fmt-btn">Format XML</button>
+        <button class="btn-secondary" id="clear-btn">Clear</button>
+      </div>
+
+      <div class="tool-io">
+        <div class="tool-io-panel">
+          <label for="xml-input">Input</label>
+          <textarea id="xml-input" spellcheck="false" placeholder="<root><child/></root>"></textarea>
+        </div>
+        <div class="tool-io-panel">
+          <div class="panel-label-row">
+            <label>Output</label>
+            <button class="btn-secondary" id="copy-btn">Copy</button>
+          </div>
+          <pre class="tool-output" id="xml-output" aria-live="polite"></pre>
+        </div>
+      </div>
+
+      <div class="tool-error" id="xml-error"></div>
+    </main>
+  </div>
+
+  <script>
+    var inputEl  = document.getElementById('xml-input');
+    var outputEl = document.getElementById('xml-output');
+    var errorEl  = document.getElementById('xml-error');
+    var copyBtn  = document.getElementById('copy-btn');
+
+    function escXML(s) {
+      return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function serializeNode(node, depth) {
+      var ind = '  '.repeat(depth);
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        var t = node.textContent.trim();
+        return t ? ind + escXML(t) + '\n' : '';
+      }
+      if (node.nodeType === Node.COMMENT_NODE) {
+        return ind + '<!--' + node.textContent + '-->\n';
+      }
+      if (node.nodeType === Node.CDATA_SECTION_NODE) {
+        return ind + '<![CDATA[' + node.textContent + ']]>\n';
+      }
+      if (node.nodeType === Node.PROCESSING_INSTRUCTION_NODE) {
+        return ind + '<?' + node.target + ' ' + node.data + '?>\n';
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+      var tag = node.tagName;
+      var attrs = Array.from(node.attributes)
+        .map(function (a) { return ' ' + a.name + '="' + escXML(a.value) + '"'; })
+        .join('');
+
+      if (node.childNodes.length === 0) return ind + '<' + tag + attrs + '/>\n';
+
+      var kids = Array.from(node.childNodes);
+      var allText = kids.every(function (c) { return c.nodeType === Node.TEXT_NODE; });
+      if (allText) {
+        var text = escXML(node.textContent.trim());
+        return ind + '<' + tag + attrs + '>' + text + '</' + tag + '>\n';
+      }
+
+      var r = ind + '<' + tag + attrs + '>\n';
+      kids.forEach(function (c) { r += serializeNode(c, depth + 1); });
+      r += ind + '</' + tag + '>\n';
+      return r;
+    }
+
+    function format() {
+      errorEl.style.display = 'none';
+      var raw = inputEl.value.trim();
+      if (!raw) { outputEl.textContent = ''; return; }
+
+      var parser = new DOMParser();
+      var doc = parser.parseFromString(raw, 'text/xml');
+      var err = doc.querySelector('parsererror');
+      if (err) {
+        errorEl.textContent = err.textContent.split('\n').slice(0, 2).join(' ').trim();
+        errorEl.style.display = 'block';
+        outputEl.textContent = '';
+        return;
+      }
+
+      var result = '';
+      doc.childNodes.forEach(function (n) { result += serializeNode(n, 0); });
+      outputEl.textContent = result.trim();
+    }
+
+    document.getElementById('fmt-btn').addEventListener('click', format);
+
+    document.getElementById('clear-btn').addEventListener('click', function () {
+      inputEl.value = '';
+      outputEl.textContent = '';
+      errorEl.style.display = 'none';
+    });
+
+    inputEl.addEventListener('keydown', function (e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') format();
+    });
+
+    copyBtn.addEventListener('click', function () {
+      var text = outputEl.textContent;
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(function () {
+        var orig = copyBtn.textContent;
+        copyBtn.textContent = 'Copied!';
+        setTimeout(function () { copyBtn.textContent = orig; }, 1500);
+      });
+    });
+  </script>
+</body>
+</html>
