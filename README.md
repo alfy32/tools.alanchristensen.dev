@@ -6,7 +6,9 @@ Free, browser-based developer tools. No account needed. No data leaves your mach
 
 - JSON Formatter — pretty-print and validate JSON with syntax highlighting
 - XML Formatter — pretty-print and indent XML markup
-- Epoch Converter — convert Unix timestamps to human-readable dates
+- Time Converter — convert Unix timestamps to human-readable dates (seconds, milliseconds, or ISO 8601)
+- Base64 — encode plain text to Base64 or decode Base64 back to text; auto-detects direction
+- UUID Generator — generate one or many version 4 UUIDs
 
 ## Stack
 

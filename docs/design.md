@@ -28,6 +28,8 @@ tools.alanchristensen.dev/
 ├── json-formatter.html
 ├── xml-formatter.html
 ├── epoch-converter.html
+├── base64.html
+├── uuid-generator.html
 ├── style.css               # Shared styles, dark mode, layout
 ├── nav.js                  # Shared site header injected via JS
 ├── tools-nav.js            # Tools side nav injected via JS (tool list + active state)
@@ -61,7 +63,7 @@ All pages share a consistent two-column shell:
 
 **Side nav (desktop ≥ 768px):** Fixed-width left column, always visible. Lists all tools by name. The active tool is highlighted. Clicking a tool navigates to that tool's page.
 
-**Top nav (mobile < 768px):** Side nav collapses. A compact `<select>` dropdown at the top of the content area lets the user switch tools.
+**Top nav (mobile < 768px):** Side nav collapses. A hamburger menu button appears in the site header; tapping it opens a dropdown listing all tools.
 
 `tools-nav.js` injects the side nav markup into every page and marks the current page active based on `location.pathname`. The tool list lives in one place in that file.
 
@@ -85,7 +87,9 @@ Main content area shows the tool UI. Layout within the content area:
 |------|-------|--------|
 | JSON Formatter | Raw JSON string | Pretty-printed, syntax-highlighted JSON |
 | XML Formatter | Raw XML string | Pretty-printed, indented XML |
-| Epoch Converter | Unix timestamp (auto-detects ms vs s based on magnitude) | Human-readable local datetime and UTC |
+| Time Converter | Unix timestamp or ISO 8601 (auto-detects ms vs s) | Human-readable local datetime and UTC |
+| Base64 | Plain text or Base64 string (auto-detects direction) | Encoded or decoded result |
+| UUID Generator | Count (1–100) | One or many version 4 UUIDs |
 
 ---
 
