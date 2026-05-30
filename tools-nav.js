@@ -4,6 +4,7 @@
     { name: 'XML Formatter',   url: 'xml-formatter.html' },
     { name: 'Time Converter',  url: 'epoch-converter.html' },
     { name: 'Base64',          url: 'base64.html' },
+    { name: 'UUID Generator',  url: 'uuid-generator.html' },
   ];
 
   function isActive(filename) {

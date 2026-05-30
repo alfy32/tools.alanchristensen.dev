@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Free online UUID v4 generator. Generate one or many UUIDs instantly. No data leaves your browser.">
+  <title>UUID Generator — Alan Christensen</title>
+  <link rel="stylesheet" href="style.css?v=2">
+  <script src="nav.js?v=2"></script>
+  <script src="tools-nav.js?v=2"></script>
+  <style>
+    .uuid-wrap {
+      max-width: 600px;
+    }
+
+    .uuid-controls {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .uuid-count-label {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .uuid-count-input {
+      width: 64px;
+      padding: 0.45rem 0.625rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 0.875rem;
+      text-align: center;
+      transition: border-color 0.15s;
+    }
+
+    .uuid-count-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .uuid-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .uuid-item {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.6rem 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--nav-bg);
+      transition: border-color 0.15s;
+    }
+
+    .uuid-item:hover {
+      border-color: color-mix(in srgb, var(--border) 60%, var(--accent));
+    }
+
+    .uuid-value {
+      flex: 1;
+      font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", ui-monospace, "Courier New", monospace;
+      font-size: 0.875rem;
+      letter-spacing: 0.02em;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .uuid-copy-one {
+      flex-shrink: 0;
+      padding: 0.25rem 0.625rem;
+      background: none;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .uuid-copy-one:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .uuid-footer {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="tools-shell">
+    <main id="tools-main">
+      <div class="uuid-wrap">
+        <div class="tool-header">
+          <h1>UUID Generator</h1>
+          <p>Generate version 4 (random) UUIDs. Nothing leaves your browser.</p>
+        </div>
+
+        <div class="uuid-controls">
+          <button class="btn-primary" id="gen-btn">Generate</button>
+          <span class="uuid-count-label">Count</span>
+          <input type="number" id="uuid-count" class="uuid-count-input" value="1" min="1" max="100">
+        </div>
+
+        <div class="uuid-list" id="uuid-list"></div>
+
+        <div class="uuid-footer" id="uuid-footer" style="display:none">
+          <button class="btn-secondary" id="copy-all-btn">Copy all</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function generateUUID() {
+      if (crypto.randomUUID) return crypto.randomUUID();
+      var bytes = crypto.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 0x0f) | 0x40;
+      bytes[8] = (bytes[8] & 0x3f) | 0x80;
+      var hex = Array.from(bytes).map(function (b) {
+        return ('0' + b.toString(16)).slice(-2);
+      }).join('');
+      return [
+        hex.slice(0, 8),
+        hex.slice(8, 12),
+        hex.slice(12, 16),
+        hex.slice(16, 20),
+        hex.slice(20),
+      ].join('-');
+    }
+
+    function flashBtn(btn, label) {
+      var orig = btn.textContent;
+      btn.textContent = label;
+      setTimeout(function () { btn.textContent = orig; }, 1500);
+    }
+
+    function generate() {
+      var count = Math.min(100, Math.max(1, parseInt(document.getElementById('uuid-count').value, 10) || 1));
+      var list = document.getElementById('uuid-list');
+      list.innerHTML = '';
+      var uuids = [];
+
+      for (var i = 0; i < count; i++) {
+        var uuid = generateUUID();
+        uuids.push(uuid);
+
+        var item = document.createElement('div');
+        item.className = 'uuid-item';
+
+        var val = document.createElement('span');
+        val.className = 'uuid-value';
+        val.textContent = uuid;
+
+        var copyBtn = document.createElement('button');
+        copyBtn.className = 'uuid-copy-one';
+        copyBtn.textContent = 'Copy';
+        (function (u, btn) {
+          btn.addEventListener('click', function () {
+            navigator.clipboard.writeText(u).then(function () { flashBtn(btn, 'Copied!'); });
+          });
+        }(uuid, copyBtn));
+
+        item.appendChild(val);
+        item.appendChild(copyBtn);
+        list.appendChild(item);
+      }
+
+      var footer = document.getElementById('uuid-footer');
+      footer.style.display = count > 1 ? 'flex' : 'none';
+      window._uuids = uuids;
+    }
+
+    document.getElementById('gen-btn').addEventListener('click', generate);
+
+    document.getElementById('uuid-count').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') generate();
+    });
+
+    document.getElementById('copy-all-btn').addEventListener('click', function () {
+      var btn = this;
+      navigator.clipboard.writeText((window._uuids || []).join('\n')).then(function () {
+        flashBtn(btn, 'Copied!');
+      });
+    });
+
+    generate();
+  </script>
+</body>
+</html>
