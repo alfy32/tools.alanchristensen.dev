@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Free Unix epoch timestamp converter. Auto-detects seconds vs milliseconds. No data leaves your browser.">
-  <title>Epoch Converter — Alan Christensen</title>
+  <meta name="description" content="Free Unix timestamp converter. Accepts seconds, milliseconds, or ISO 8601. No data leaves your browser.">
+  <title>Time Converter — Alan Christensen</title>
   <link rel="stylesheet" href="style.css">
   <script src="nav.js"></script>
   <script src="tools-nav.js"></script>
@@ -13,7 +13,7 @@
   <div id="tools-shell">
     <main id="tools-main">
       <div class="tool-header">
-        <h1>Epoch Converter</h1>
+        <h1>Time Converter</h1>
         <p>Convert Unix timestamps to human-readable dates. Nothing leaves your browser.</p>
       </div>
 
@@ -22,13 +22,12 @@
           type="text"
           id="epoch-input"
           class="epoch-text-input"
-          placeholder="e.g. 1748563200 or 1748563200000"
-          inputmode="numeric"
+          placeholder="seconds, milliseconds, or ISO 8601"
           autocomplete="off"
         >
         <button class="btn-primary" id="convert-btn">Convert</button>
       </div>
-      <p class="epoch-hint">Auto-detects unit: &gt;10 digits treated as milliseconds, otherwise seconds.</p>
+      <p class="epoch-hint">Accepts seconds (1748563200), milliseconds (1748563200000), or ISO 8601 (2025-05-30T00:00:00Z).</p>
 
       <div class="tool-error" id="epoch-error"></div>
 
@@ -89,16 +88,25 @@
       var raw = inputEl.value.trim();
       if (!raw) return;
 
-      var n = Number(raw);
-      if (!Number.isFinite(n)) {
-        errorEl.textContent = 'Enter a valid integer timestamp.';
-        errorEl.style.display = 'block';
-        return;
+      var ms, unit;
+
+      if (/^-?\d+(\.\d+)?$/.test(raw)) {
+        var n = Number(raw);
+        var digits = raw.replace(/^-/, '').replace(/\..*/, '').length;
+        var isMs = digits > 10;
+        ms   = isMs ? n : n * 1000;
+        unit = isMs ? 'Milliseconds' : 'Seconds';
+      } else {
+        var parsed = new Date(raw);
+        if (isNaN(parsed.getTime())) {
+          errorEl.textContent = 'Enter a valid timestamp: seconds, milliseconds, or ISO 8601.';
+          errorEl.style.display = 'block';
+          return;
+        }
+        ms   = parsed.getTime();
+        unit = 'ISO 8601';
       }
 
-      var digits = raw.replace(/^-/, '').replace(/\..*/, '').length;
-      var isMs = digits > 10;
-      var ms   = isMs ? n : n * 1000;
       var date = new Date(ms);
 
       if (isNaN(date.getTime())) {
@@ -107,7 +115,7 @@
         return;
       }
 
-      document.getElementById('r-unit').textContent     = isMs ? 'Milliseconds' : 'Seconds';
+      document.getElementById('r-unit').textContent     = unit;
       document.getElementById('r-local').textContent    = date.toLocaleString();
       document.getElementById('r-utc').textContent      = date.toUTCString();
       document.getElementById('r-iso').textContent      = date.toISOString();

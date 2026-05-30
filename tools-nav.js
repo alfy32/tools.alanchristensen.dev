@@ -2,7 +2,7 @@
   var TOOLS = [
     { name: 'JSON Formatter',  url: 'json-formatter.html' },
     { name: 'XML Formatter',   url: 'xml-formatter.html' },
-    { name: 'Epoch Converter', url: 'epoch-converter.html' },
+    { name: 'Time Converter', url: 'epoch-converter.html' },
   ];
 
   function isActive(filename) {
